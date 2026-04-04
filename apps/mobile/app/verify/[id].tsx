@@ -29,9 +29,48 @@ export default function VerificationScreen() {
 
   useEffect(() => {
     if (!id) return;
+    const captureId = typeof id === 'string' ? id : String(id);
+
+    // Demo captures (from offline/fallback mode) — show mock verification data
+    if (captureId.startsWith('demo-')) {
+      const ts = parseInt(captureId.replace('demo-', ''), 10) || Date.now();
+      const mockHash = (seed: string) => {
+        let h = 0;
+        for (let i = 0; i < seed.length; i++) h = ((h << 5) - h + seed.charCodeAt(i)) | 0;
+        return Math.abs(h).toString(16).padStart(8, '0').repeat(8);
+      };
+      setData({
+        imageHash: mockHash(captureId + 'img'),
+        fingerprintHash: mockHash(captureId + 'fp'),
+        payloadHash: mockHash(captureId + 'payload'),
+        status: 'ATTESTED',
+        anomalyStatus: 'CLEAN',
+        capturedAt: new Date(ts).toISOString(),
+        txHash: '0x' + mockHash(captureId + 'tx'),
+        blockNumber: String(18293755 + Math.floor(Math.random() * 100)),
+        latitude: 23.7154,
+        longitude: 86.9514,
+        onChainVerified: true,
+        fingerprint: {
+          timestampUtc: new Date(ts).toISOString(),
+          timestampUnixMs: ts,
+          gps: { latitude: 23.7154, longitude: 86.9514, altitude: 215.3, accuracy: 4.2, speed: 0, heading: null },
+          accelerometer: { x: 0.02, y: -0.01, z: -9.81, magnitude: 9.81 },
+          gyroscope: { x: 0.001, y: -0.002, z: 0.001 },
+          light: { lux: 340 },
+          barometer: { pressure_hpa: 1013.25 },
+          network: { connectionType: 'wifi', wifiRssi: -65, cellularSignal: null },
+          device: { model: 'Web Browser', deviceType: 'DESKTOP', osVersion: 'web', batteryLevel: 100, isCharging: false },
+        },
+      });
+      setLoading(false);
+      return;
+    }
+
+    // Real captures — fetch from API with fallback
     (async () => {
       try {
-        const res = await fetch(`${API_URL}/api/v1/verify/${id}`);
+        const res = await fetch(`${API_URL}/api/v1/verify/${captureId}`);
         if (!res.ok) throw new Error(`API returned ${res.status}`);
         const json = await res.json();
         setData(json.data);
