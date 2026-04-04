@@ -65,11 +65,11 @@ pnpm install
 ```bash
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/phygital_trace
 REDIS_URL=redis://localhost:6379
-JWT_SECRET=your-secret-jwt-key-min-32-chars
+JWT_SECRET=your-randomly-generated-secret-key-here
 PINATA_API_KEY=
 PINATA_SECRET_KEY=
 BASE_RPC_URL=https://sepolia.base.org
-ATTESTATION_CONTRACT_ADDRESS=0x0000000000000000000000000000000000000000
+ATTESTATION_CONTRACT_ADDRESS=0x0000000000000000000000000000000000000000 # replace with deployed TruthAttestation contract address
 PRIVATE_KEY_SIGNER=
 AI_SERVICE_URL=http://localhost:8000
 PORT=3001
