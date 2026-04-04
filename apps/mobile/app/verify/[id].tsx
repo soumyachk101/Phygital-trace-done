@@ -410,9 +410,6 @@ function HashBlock({ label, hash }: { label: string; hash: string }) {
           try {
             if (Platform.OS === 'web') {
               await navigator.clipboard.writeText(hash);
-            } else {
-              const Clipboard = require('expo-clipboard');
-              await Clipboard.setStringAsync(hash);
             }
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
