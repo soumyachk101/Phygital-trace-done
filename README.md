@@ -65,7 +65,7 @@ pnpm install
 ```bash
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/phygital_trace
 REDIS_URL=redis://localhost:6379
-JWT_SECRET=dev-jwt-secret-for-development-mode-at-least-32
+JWT_SECRET=your-secret-jwt-key-min-32-chars
 PINATA_API_KEY=
 PINATA_SECRET_KEY=
 BASE_RPC_URL=https://sepolia.base.org
@@ -79,10 +79,12 @@ AWS_ACCESS_KEY_ID=
 AWS_SECRET_ACCESS_KEY=
 ```
 
+> Use a strong `JWT_SECRET` in real environments (minimum 32+ characters) and never commit real secrets.
+
 ### Database (API)
 
 ```bash
-cd /home/runner/work/Phygital-trace-done/Phygital-trace-done/packages/api
+cd packages/api
 pnpm db:migrate
 pnpm db:generate
 ```
@@ -90,7 +92,7 @@ pnpm db:generate
 ### AI service
 
 ```bash
-cd /home/runner/work/Phygital-trace-done/Phygital-trace-done/packages/ai-service
+cd packages/ai-service
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
