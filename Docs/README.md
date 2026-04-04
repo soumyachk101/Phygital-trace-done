@@ -20,11 +20,11 @@ Some docs describe planned architecture that is broader than the currently commi
 
 Use these as the source of truth for what is implemented right now:
 
-- `/README.md` (root)
-- `/packages/api/src/**`
-- `/packages/contracts/**`
-- `/packages/ai-service/**`
-- `/packages/shared/**`
+- `README.md` (root)
+- `packages/api/src/**`
+- `packages/contracts/**`
+- `packages/ai-service/**`
+- `packages/shared/**`
 
 ## Contributing to documentation
 

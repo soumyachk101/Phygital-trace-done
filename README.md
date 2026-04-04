@@ -65,11 +65,11 @@ pnpm install
 ```bash
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/phygital_trace
 REDIS_URL=redis://localhost:6379
-JWT_SECRET=CHANGE_ME_generate_with_openssl_rand_base64_32
+JWT_SECRET=your-jwt-secret-here
 PINATA_API_KEY=
 PINATA_SECRET_KEY=
 BASE_RPC_URL=https://sepolia.base.org
-ATTESTATION_CONTRACT_ADDRESS=0x0000000000000000000000000000000000000000 # replace with deployed TruthAttestation address (see packages/contracts/scripts/deploy.ts); zero address will fail
+ATTESTATION_CONTRACT_ADDRESS=0x0000000000000000000000000000000000000000
 PRIVATE_KEY_SIGNER=
 AI_SERVICE_URL=http://localhost:8000
 PORT=3001
@@ -81,6 +81,7 @@ AWS_SECRET_ACCESS_KEY=
 
 > Use a strong `JWT_SECRET` in real environments (at least 32 characters) and never commit real secrets.
 > Example generator: `openssl rand -base64 32`
+> Replace `ATTESTATION_CONTRACT_ADDRESS` with your deployed contract address (see `packages/contracts/scripts/deploy.ts`); the zero address will fail.
 
 ### Database (API)
 
