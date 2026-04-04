@@ -143,4 +143,9 @@ pnpm start
 
 ## Team
 
-Built for hackathon — bridging physical and digital worlds.
+| 👤 Name | 🛠️ Role |
+|---|---|
+| **Shyam** | <TBD> |
+| **Snigdha** | <TBD> |
+| **Soumaya** | <TBD> |
+| **Subh** | <TBD> |
