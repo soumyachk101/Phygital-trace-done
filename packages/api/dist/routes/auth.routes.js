@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const validate_middleware_1 = require("../middleware/validate.middleware");
+const capture_schema_1 = require("../schemas/capture.schema");
+const user_controller_1 = require("../controllers/user.controller");
+const auth_middleware_1 = require("../middleware/auth.middleware");
+const router = (0, express_1.Router)();
+router.post('/register', (0, validate_middleware_1.validate)(capture_schema_1.registerDeviceSchema), user_controller_1.registerDevice);
+router.post('/login', (0, validate_middleware_1.validate)(capture_schema_1.registerDeviceSchema.pick({ deviceId: true })), user_controller_1.loginDevice);
+router.get('/me', auth_middleware_1.deviceAuth, user_controller_1.getProfile);
+exports.default = router;

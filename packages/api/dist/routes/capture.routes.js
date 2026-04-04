@@ -1,0 +1,15 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const validate_middleware_1 = require("../middleware/validate.middleware");
+const capture_schema_1 = require("../schemas/capture.schema");
+const auth_middleware_1 = require("../middleware/auth.middleware");
+const rateLimit_middleware_1 = require("../middleware/rateLimit.middleware");
+const capture_controller_1 = require("../controllers/capture.controller");
+const router = (0, express_1.Router)();
+router.use(auth_middleware_1.deviceAuth);
+router.use((0, rateLimit_middleware_1.rateLimit)(10, 60 * 60 * 1000, (req) => req.deviceId || req.ip || 'unknown'));
+router.post('/', (0, validate_middleware_1.validate)(capture_schema_1.captureSubmissionSchema), capture_controller_1.createCapture);
+router.get('/', capture_controller_1.listCaptures);
+router.get('/:id', capture_controller_1.getCapture);
+exports.default = router;

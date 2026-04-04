@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm approve-builds:*)",
+      "Bash(PNPM_SCRIPTS_ALLOWED=1 pnpm --filter @phygital-trace/api exec prisma generate)",
+      "Bash(pnpm build:*)",
+      "Bash(npx tsc:*)",
+      "Bash(ls /c/Users/HP/Downloads/Phygital-Trace/.env*)",
+      "Bash(ls /c/Users/HP/Downloads/Phygital-Trace/Docs/.env*)",
+      "Bash(ls *.json *.ts *.js)",
+      "Bash(pnpm --filter api exec tsc --noEmit)",
+      "Bash(pnpm --filter api build)"
+    ]
+  }
+}
