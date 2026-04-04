@@ -1,127 +1,89 @@
 # Phygital-Trace
 
-**Bridging physical reality with digital truth through AI-powered verification and blockchain attestation.**
+Phygital-Trace verifies media provenance by combining sensor-fingerprint analysis, IPFS metadata storage, and blockchain attestation.
 
-## Problem
+## Current Repository Scope
 
-Digital media — photos, videos, sensor readings — can be fabricated, deepfaked, or sensor-spoofed in seconds. There is currently no widely-adopted, lightweight mechanism to **prove "this came from the real physical world at this time."** Industries affected: journalism, insurance claims, supply chain, legal evidence, and IoT monitoring.
+This repository currently contains:
 
-## Solution
+- `packages/api` — Express + TypeScript API
+- `packages/ai-service` — FastAPI anomaly detector (Python)
+- `packages/contracts` — Solidity smart contracts (Hardhat)
+- `packages/shared` — shared TypeScript package
+- `Docs` — product and technical documentation
 
-Phygital-Trace is a full-stack system that **captures** data from the physical world, **verifies** its authenticity using AI-driven anomaly detection, and **attests** to its provenance on-chain via a Solidity smart contract — creating an immutable, tamper-proof chain of custody.
-
----
+> Note: A mobile app is described in `Docs/`, but no `apps/mobile` source exists in this repository right now.
 
 ## Architecture
 
-```
-┌─────────────────┐        ┌──────────────────┐        ┌──────────────────┐
-│   Mobile App    │ ─────► │   Express API    │ ─────► │  AI Anomaly       │
-│ (React Native)  │  POST  │  (Node.js/Type   │  POST  │  Detector         │
-│                 │        │     Script)      │        │  (Python/FastAPI) │
-│  - Camera capture       └────────┬─────────┘        └──────────────────┘
-│  - Sensor fingerprint            │
-│  - Verification scan             ├─────────────┐
-└─────────────────┘               │             │
-                            ┌─────▼──────┐ ┌────▼────────────┐
-                            │ PostgreSQL │ │  Blockchain     │
-                            │ (Neon)     │ │  (Ethereum/     │
-                            │            │ │   Hardhat dev)  │
-                            └────────────┘ │  - TruthAttest  │
-                                           │    ation.sol    │
-                                           │  - IPFS storage │
-                                           └─────────────────┘
+```text
+Client/App -> API (Express) -> AI Service (FastAPI)
+                 |                 |
+                 v                 |
+             PostgreSQL            |
+                 |                 |
+                 +-------> IPFS ---+
+                 |
+                 +-------> TruthAttestation (Solidity)
 ```
 
-## Data Flow
+## Repository Structure
 
-1. **Capture** — The React Native mobile app captures media along with a hardware sensor fingerprint (compass, GPS, accelerometer, magnetometer, device motion).
-2. **Fingerprinting** — A cryptographic hash of the sensor fingerprint + image is computed client-side.
-3. **AI Analysis** — The Express API forwards the fingerprint data to the Python AI service, which runs anomaly detection to check for spoofing or manipulation.
-4. **Attestation** — If the data passes AI verification, a smart contract call `attest(payloadHash, ipfsCid)` records the attestation on-chain.
-5. **Verification** — Anyone can verify provenance later by calling `verify(payloadHash)` on the smart contract.
-
----
-
-## Tech Stack
-
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| **Mobile** | React Native (Expo), TypeScript, React Navigation | Camera + sensor capture, verification UI |
-| **API** | Express.js, TypeScript, Zod, JWT | REST API, auth, routing, orchestration |
-| **Database** | PostgreSQL (Neon), Prisma ORM | User, capture, and attestation records |
-| **AI Service** | Python, FastAPI, scikit-learn, SciPy | Anomaly detection on sensor fingerprints |
-| **Blockchain** | Solidity 0.8.24, OpenZeppelin, Hardhat | On-chain truth attestation & verification |
-| **Shared** | TypeScript, pnpm workspace | Common types across services |
-
----
-
-## Project Structure
-
-```
-phygital-trace/
-  apps/
-    mobile/               # React Native mobile app
-  packages/
-    api/                  # Express.js API server
-    ai-service/           # Python FastAPI anomaly detector
-    contracts/            # Solidity smart contracts
-    shared/               # Shared TypeScript types
-  testsprite_tests/       # Automated testing
+```text
+Phygital-Trace/
+├── Docs/
+├── packages/
+│   ├── ai-service/
+│   ├── api/
+│   ├── contracts/
+│   └── shared/
+├── testsprite_tests/
+├── package.json
+└── pnpm-workspace.yaml
 ```
 
----
+## Prerequisites
 
-## Key Features
+- Node.js `>=20`
+- pnpm `>=8`
+- Python `>=3.11`
+- PostgreSQL
+- Redis
 
-- **Multi-sensor fingerprinting**: GPS, magnetometer, accelerometer, gyroscope, device motion
-- **AI-powered anomaly detection**: Statistical analysis on sensor data to detect spoofing
-- **Blockchain attestation**: Immutable proof of capture via Ethereum smart contract
-- **IPFS storage**: Decentralized storage of capture metadata
-- **Real-time verification**: Verify any capture's provenance in one API call
-- **Batch attestation**: Bulk verification support via `attestBatch()`
-- **Revocation**: Contract owner can revoke compromised attestations
-- **Pausable contract**: Emergency pause mechanism via OpenZeppelin
+## Local Setup
 
----
-
-## Smart Contract: TruthAttestation
-
-| Function | Description |
-|----------|------------|
-| `attest(payloadHash, ipfsCid)` | Records a new attestation on-chain |
-| `attestBatch(payloadHashes, ipfsCidBatch)` | Bulk attestation for multiple captures |
-| `verify(payloadHash)` | Returns existence, timestamp, attester, and revocation status |
-| `revoke(payloadHash)` | Revokes an attestation (owner only) |
-
----
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 20+
-- pnpm 8+
-- Python 3.11+ (for AI service)
-
-### Install Dependencies
+From repository root:
 
 ```bash
+corepack enable
+corepack prepare pnpm@8 --activate
 pnpm install
 ```
 
-### Environment Setup
-
-Copy `.env.example` to `.env` in each package and fill in values:
+### API environment (`packages/api/.env`)
 
 ```bash
-# packages/api/.env
-DATABASE_URL=postgresql://...
-JWT_SECRET=your-secret
-AI_SERVICE_URL=http://localhost:8000/
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/phygital_trace
+REDIS_URL=redis://localhost:6379
+JWT_SECRET=your-jwt-secret-here
+PINATA_API_KEY=
+PINATA_SECRET_KEY=
+BASE_RPC_URL=https://sepolia.base.org
+ATTESTATION_CONTRACT_ADDRESS=0xYOUR_CONTRACT_ADDRESS_HERE
+PRIVATE_KEY_SIGNER=
+AI_SERVICE_URL=http://localhost:8000
+PORT=3001
+NODE_ENV=development
+S3_BUCKET=
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
 ```
 
-### Database
+> Use a strong `JWT_SECRET` in real environments (at least 32 characters) and never commit real secrets.
+> Example generator: `openssl rand -base64 32`
+> Replace `ATTESTATION_CONTRACT_ADDRESS` with your deployed contract address (see `packages/contracts/scripts/deploy.ts`).
+
+### Database (API)
 
 ```bash
 cd packages/api
@@ -129,23 +91,64 @@ pnpm db:migrate
 pnpm db:generate
 ```
 
-### Start Development
+### AI service
 
 ```bash
-# Start all services
-pnpm dev
-
-# Start mobile app only
-pnpm start
+cd packages/ai-service
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python main.py
 ```
 
----
+### Start services
 
-## Team
+From repository root:
 
-| 👤 Name | 🛠️ Role |
-|---|---|
-| **Shyam** | <TBD> |
-| **Snigdha** | <TBD> |
-| **Soumaya** | <TBD> |
-| **Subh** | <TBD> |
+```bash
+pnpm dev
+```
+
+This starts workspace `dev` scripts (currently `packages/api` and `packages/shared`).
+
+## Main Commands
+
+From repository root:
+
+- `pnpm dev` — run workspace development scripts
+- `pnpm build` — run workspace build scripts
+- `pnpm test` — run workspace test scripts
+- `pnpm lint` — runs only if packages define a `lint` script
+
+## API Quick Reference
+
+Base path: `/api/v1`
+
+- `POST /auth/register`
+- `POST /auth/login`
+- `GET /auth/me` (requires auth)
+- `POST /captures` (requires auth)
+- `GET /captures` (requires auth)
+- `GET /captures/:id` (requires auth)
+- `GET /verify/:shortCode` (public)
+- `GET /health` (public)
+- `GET /health/deep` (public)
+
+Auth:
+
+- `X-Device-Id: <deviceId>` header, or
+- `Authorization: Bearer <deviceId>`
+
+## Smart Contract
+
+`packages/contracts/contracts/TruthAttestation.sol` exposes:
+
+- `attest(bytes32 payloadHash, bytes32 ipfsCidBytes32)`
+- `attestBatch(bytes32[] payloadHashes, bytes32[] ipfsCidBatch)`
+- `verify(bytes32 payloadHash)`
+- `revoke(bytes32 payloadHash)`
+- `pause()` / `unpause()`
+
+## Additional Documentation
+
+See `/Docs/README.md` for a documentation index and file-by-file guide.
