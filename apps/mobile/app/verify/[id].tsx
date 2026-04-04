@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, StyleSheet, Share, Platform, Alert } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, StyleSheet, Share, Platform, Alert, Linking } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { API_URL } from '../../constants/api';
@@ -265,7 +265,7 @@ export default function VerificationScreen() {
             <Text style={s.dataCardLabel}>LAT/LONG POSITION</Text>
             <Text style={s.dataCardValue}>
               {data.latitude ? `${data.latitude.toFixed(6)}° N` : '34.0522° N'},{' '}
-              {data.longitude ? `${data.longitude.toFixed(6)}° W` : '118.2437° W'}
+              {data.longitude ? `${data.longitude.toFixed(6)}° E` : '118.2437° W'}
             </Text>
           </View>
 
@@ -273,11 +273,11 @@ export default function VerificationScreen() {
           <View style={s.sensorGrid}>
             <View style={s.sensorCard}>
               <Text style={s.sensorLabel}>PRESSURE</Text>
-              <Text style={s.sensorValue}>{fp.pressureHpa ? `${fp.pressureHpa.toFixed(1)} hPa` : '1013.2 hPa'}</Text>
+              <Text style={s.sensorValue}>{fp.barometer?.pressure_hpa ? `${fp.barometer.pressure_hpa.toFixed(1)} hPa` : fp.pressureHpa ? `${fp.pressureHpa.toFixed(1)} hPa` : '1013.2 hPa'}</Text>
             </View>
             <View style={s.sensorCard}>
               <Text style={s.sensorLabel}>LIGHT INTENSITY</Text>
-              <Text style={s.sensorValue}>{fp.lightLux ? `${fp.lightLux} lux` : '1250 lux'}</Text>
+              <Text style={s.sensorValue}>{fp.light?.lux ? `${fp.light.lux} lux` : fp.lightLux ? `${fp.lightLux} lux` : '1250 lux'}</Text>
             </View>
           </View>
 
@@ -285,13 +285,13 @@ export default function VerificationScreen() {
           <Text style={s.accelLabel}>ACCELEROMETER VECTOR (X, Y, Z)</Text>
           <View style={s.accelGrid}>
             <View style={s.accelCell}>
-              <Text style={s.accelValue}>{fp.accelX ? fp.accelX.toFixed(4) : '0.1247'}</Text>
+              <Text style={s.accelValue}>{fp.accelerometer?.x?.toFixed(4) ?? fp.accelX?.toFixed(4) ?? '0.1247'}</Text>
             </View>
             <View style={s.accelCell}>
-              <Text style={s.accelValue}>{fp.accelY ? fp.accelY.toFixed(4) : '-0.0034'}</Text>
+              <Text style={s.accelValue}>{fp.accelerometer?.y?.toFixed(4) ?? fp.accelY?.toFixed(4) ?? '-0.0034'}</Text>
             </View>
             <View style={s.accelCell}>
-              <Text style={s.accelValue}>{fp.accelZ ? fp.accelZ.toFixed(4) : '9.7891'}</Text>
+              <Text style={s.accelValue}>{fp.accelerometer?.z?.toFixed(4) ?? fp.accelZ?.toFixed(4) ?? '9.7891'}</Text>
             </View>
           </View>
         </View>
@@ -325,9 +325,17 @@ export default function VerificationScreen() {
             </Text>
           </View>
 
-          <TouchableOpacity style={s.basescanButton}>
-            <Ionicons name="open-outline" size={14} color="#888888" />
-            <Text style={s.basescanText}>VIEW TRANSACTION ON BASESCAN</Text>
+          <TouchableOpacity style={s.basescanButton} onPress={() => {
+            const txHash = data.txHash || '0x0';
+            const explorerUrl = `https://basescan.org/tx/${txHash}`;
+            if (Platform.OS === 'web') {
+              window.open(explorerUrl, '_blank');
+            } else {
+              Linking.openURL(explorerUrl);
+            }
+          }}>
+            <Ionicons name="open-outline" size={14} color="#FF6B00" />
+            <Text style={[s.basescanText, { color: '#FF6B00' }]}>VIEW TRANSACTION ON BASESCAN</Text>
           </TouchableOpacity>
         </View>
 
@@ -392,13 +400,25 @@ function DataRow({ label, value }: { label: string; value: string }) {
 
 function HashBlock({ label, hash }: { label: string; hash: string }) {
   const shortHash = hash && hash.length > 30 ? hash.slice(0, 14) + '...' + hash.slice(-8) : (hash || '---');
+  const [copied, setCopied] = React.useState(false);
   return (
     <View style={s.hashBlock}>
       <Text style={s.hashLabel}>{label}</Text>
       <View style={s.hashValueRow}>
         <Text style={s.hashValue}>{shortHash}</Text>
-        <TouchableOpacity>
-          <Ionicons name="copy-outline" size={14} color="#4a4949" />
+        <TouchableOpacity onPress={async () => {
+          try {
+            if (Platform.OS === 'web') {
+              await navigator.clipboard.writeText(hash);
+            } else {
+              const Clipboard = require('expo-clipboard');
+              await Clipboard.setStringAsync(hash);
+            }
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+          } catch {}
+        }}>
+          <Ionicons name={copied ? "checkmark" : "copy-outline"} size={14} color={copied ? "#00E676" : "#FF6B00"} />
         </TouchableOpacity>
       </View>
     </View>
