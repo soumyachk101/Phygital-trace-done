@@ -117,29 +117,26 @@ export default function VerificationScreen() {
 
     try {
       if (Platform.OS === 'web') {
-        // Web: copy to clipboard and offer download
-        try {
-          await navigator.clipboard.writeText(certText);
-          alert('Certificate copied to clipboard!');
-        } catch {
-          // Fallback: create a downloadable text file
-          const blob = new Blob([certText], { type: 'text/plain' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `phygital-trace-cert-${idStr.slice(0, 8)}.txt`;
-          a.click();
-          URL.revokeObjectURL(url);
-        }
+        // Web: download as .txt file
+        const blob = new Blob([certText], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `PhygitalTrace-Cert-${idStr.slice(0, 8)}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        alert('Certificate downloaded!');
       } else {
-        // Mobile: use Share API
+        // Mobile: Share sheet — user can save to Files, Drive, WhatsApp, etc.
         await Share.share({
-          title: `Phygital-Trace Certificate ${idStr.slice(0, 8)}`,
+          title: `Phygital-Trace Certificate`,
           message: certText,
         });
       }
     } catch (err) {
-      Alert.alert('Error', 'Could not share certificate');
+      Alert.alert('Error', 'Could not save certificate');
     }
   }, [data, idStr, isVerified]);
 

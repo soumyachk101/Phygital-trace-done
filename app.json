@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "7dcceac1-41c7-459f-bec8-d8ed12057fb1"
+      }
+    },
+    "android": {
+      "package": "com.soumya.chk101.phygitaltrace"
+    }
+  }
+}

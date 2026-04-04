@@ -20,7 +20,10 @@ export default function LandingScreen() {
             <View style={styles.logoDot} />
             <Text style={styles.logoText}>PHYGITAL-TRACE</Text>
           </View>
-          <TouchableOpacity style={styles.headerButton}>
+          <TouchableOpacity 
+            style={styles.headerButton}
+            onPress={() => router.push('/verify/')}
+          >
             <Text style={styles.headerButtonText}>[VERIFY]</Text>
           </TouchableOpacity>
         </View>
@@ -53,6 +56,7 @@ export default function LandingScreen() {
             <TouchableOpacity 
               style={styles.secondaryButton}
               activeOpacity={0.7}
+              onPress={() => router.push('/verify/')}
             >
               <Text style={styles.secondaryButtonText}>VERIFY A CERTIFICATE</Text>
             </TouchableOpacity>
