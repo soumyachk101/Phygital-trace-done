@@ -1,6 +1,6 @@
 export interface PhysicalFingerprint {
   timestampUtc: string;
-  timestampUnixMs: number;
+  timestampUnixMs: number | bigint;
   gps: {
     latitude: number;
     longitude: number;

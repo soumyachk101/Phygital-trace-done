@@ -20,7 +20,7 @@ export default function ProfileScreen() {
         })
         .catch(() => {});
     }
-  }, [isReady, deviceId]);
+  }, [isReady, deviceId, request]);
 
   if (!isReady) {
     return (

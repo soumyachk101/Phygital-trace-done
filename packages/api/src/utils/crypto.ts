@@ -19,7 +19,7 @@ export function sha256String(input: string): string {
  * Compute the fingerprint hash by serializing the fingerprint object to JSON and hashing it.
  */
 export function computeFingerprintHash(fingerprint: Record<string, unknown>): string {
-  const json = JSON.stringify(fingerprint);
+  const json = JSON.stringify(fingerprint, Object.keys(fingerprint).sort());
   return sha256String(json);
 }
 

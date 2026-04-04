@@ -13,12 +13,12 @@ export const registerDevice = asyncHandler(async (req: Request, res: Response) =
   });
 
   if (existing) {
-    return res.status(200).json({
-      success: true,
+    return res.status(409).json({
+      success: false,
+      error: { code: 'DEVICE_ALREADY_REGISTERED', message: 'Device already registered' },
       data: {
         userId: existing.id,
         deviceId: existing.deviceId,
-        message: 'Device already registered',
       },
     });
   }

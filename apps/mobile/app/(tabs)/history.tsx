@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, FlatList, RefreshControl, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import useApi from '@/hooks/useApi';
@@ -19,6 +19,10 @@ export default function HistoryScreen() {
     }
     setRefreshing(false);
   }, [listCaptures]);
+
+  useEffect(() => {
+    loadCaptures();
+  }, [loadCaptures]);
 
   const renderItem = ({ item }: { item: any }) => {
     const isVerified = item.status === 'ATTESTED';

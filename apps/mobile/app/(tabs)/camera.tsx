@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, StyleSheet } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, StyleSheet, Share, Platform } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useCapture, CaptureStatus } from '@/hooks/useCapture';
-import { useSensors } from '@/hooks/useSensors';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -23,8 +22,7 @@ const ACTIVE_STATUSES: CaptureStatus[] = ['requesting_permission', 'capturing', 
 export default function CameraScreen() {
   const router = useRouter();
   const [permission, requestPermission] = useCameraPermissions();
-  const { status, lastResult, error, cameraRef, takeCapture, reset } = useCapture();
-  const sensors = useSensors(status === 'idle' || status === 'complete' || status === 'error');
+  const { status, lastResult, error, cameraRef, takeCapture, reset, sensors } = useCapture();
 
   if (!permission) {
     return <View style={{ flex: 1, backgroundColor: '#131313' }} />;
@@ -67,11 +65,20 @@ export default function CameraScreen() {
             <Text style={s.successMeta}>TX: 0x3f9a...d42c</Text>
 
             <View style={s.successActions}>
-              <TouchableOpacity style={s.ghostButton}>
+              <TouchableOpacity style={s.ghostButton} onPress={async () => {
+                const url = lastResult.verificationUrl || `https://phygital-trace.com/verify/${lastResult.captureId}`;
+                if (Platform.OS === 'web') {
+                  try { await navigator.clipboard.writeText(url); alert('Link copied!'); } catch { }
+                } else {
+                  await Share.share({ message: `Verify my capture: ${url}` });
+                }
+              }}>
                 <Ionicons name="share-outline" size={14} color="#e5e2e1" />
                 <Text style={s.ghostButtonText}>SHARE LINK</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={s.ghostButton}>
+              <TouchableOpacity style={s.ghostButton} onPress={() => {
+                router.push(`/verify/${lastResult.captureId}`);
+              }}>
                 <Ionicons name="qr-code-outline" size={14} color="#e5e2e1" />
                 <Text style={s.ghostButtonText}>QR CODE</Text>
               </TouchableOpacity>
@@ -208,17 +215,16 @@ export default function CameraScreen() {
           <View>
             {/* Camera View */}
             <View style={s.cameraContainer}>
-              {status === 'capturing' ? (
-                <View style={s.capturingOverlay}>
+              <CameraView 
+                style={{ width: '100%', height: '100%' }}
+                ref={cameraRef}
+                facing="back"
+                barcodeScannerSettings={{ barcodeTypes: [] }}
+              />
+              {status === 'capturing' && (
+                <View style={[s.capturingOverlay, { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }]}>
                   <ActivityIndicator size="large" color="#FF6B00" />
                 </View>
-              ) : (
-                <CameraView 
-                  style={{ width: '100%', height: '100%' }}
-                  ref={cameraRef}
-                  facing="back"
-                  barcodeScannerSettings={{ barcodeTypes: [] }}
-                />
               )}
 
               {/* Corner brackets */}

@@ -29,11 +29,10 @@ export const createCapture = asyncHandler(async (req: Request, res: Response) =>
  */
 export const listCaptures = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.userId!;
-  const { PrismaClient } = await import('@prisma/client');
   const prisma = (await import('../config/database')).default;
 
-  const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
-  const offset = parseInt(req.query.offset as string) || 0;
+  const limit = Math.min(Math.abs(Math.floor(Number(req.query.limit))) || 20, 100);
+  const offset = Math.max(Math.abs(Math.floor(Number(req.query.offset))) || 0, 0);
 
   const [captures, total] = await Promise.all([
     prisma.capture.findMany({
@@ -75,7 +74,7 @@ export const getCapture = asyncHandler(async (req: Request, res: Response) => {
   const prisma = (await import('../config/database')).default;
 
   const capture = await prisma.capture.findUnique({
-    where: { id: req.params.id },
+    where: { id: req.params.id, userId: req.userId },
     select: {
       id: true,
       shortCode: true,

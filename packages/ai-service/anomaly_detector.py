@@ -84,7 +84,7 @@ class AnomalyDetector:
         accuracy = gps.get("accuracy", 10.0)
         speed = gps.get("speed")
 
-        if accuracy < THRESHOLDS["GPS_MIN_ACCURACY"] and speed is not None:
+        if accuracy > THRESHOLDS["GPS_MIN_ACCURACY"] and speed is not None:
             if abs(speed) > THRESHOLDS["GPS_TELEPORT_SPEED"]:
                 flags.append("GPS_TELEPORT")
                 details["gps_teleport"] = f"Speed {speed} m/s with accuracy {accuracy}m"
@@ -153,9 +153,9 @@ class AnomalyDetector:
         if level is not None and (level > 100.0 or level < 0.0):
             flags.append("BATTERY_ANOMALY")
             details["battery_anomaly"] = f"Battery level {level}% out of range"
-        elif level is not None and charging and level < 5:
+        elif level is not None and charging and level < 0:
             flags.append("BATTERY_ANOMALY")
-            details["battery_anomaly"] = "Charging but battery level critically low"
+            details["battery_anomaly"] = "Charging but battery level impossible"
 
     def _compute_score(self, flags: list[str]) -> float:
         if not flags:

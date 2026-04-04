@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, StyleSheet, Share, Platform, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { API_URL } from '../../constants/api';
@@ -82,6 +82,68 @@ export default function VerificationScreen() {
     })();
   }, [id]);
 
+  // Derived values - computed before early returns so hooks always run in same order
+  const isVerified = data ? (data.onChainVerified || data.status === 'ATTESTED') : false;
+  const fp = data?.fingerprint || {};
+  const idStr = typeof id === 'string' ? id : String(id);
+
+  const handleDownloadCertificate = useCallback(async () => {
+    if (!data) return;
+    const certText = [
+      '═══════════════════════════════════════',
+      '  PHYGITAL-TRACE VERIFICATION CERTIFICATE',
+      '═══════════════════════════════════════',
+      '',
+      `  Status: ${isVerified ? '✓ VERIFIED' : '✗ UNVERIFIED'}`,
+      `  Certificate ID: ${idStr}`,
+      `  Captured: ${data.capturedAt ? new Date(data.capturedAt).toLocaleString() : 'N/A'}`,
+      `  Location: ${data.latitude?.toFixed(6) ?? 'N/A'}°N, ${data.longitude?.toFixed(6) ?? 'N/A'}°E`,
+      '',
+      '  ── CRYPTOGRAPHIC PROOF ──',
+      `  Image Hash (SHA-256): ${data.imageHash}`,
+      `  Fingerprint Hash: ${data.fingerprintHash}`,
+      `  Payload Hash: ${data.payloadHash}`,
+      '',
+      '  ── BLOCKCHAIN ATTESTATION ──',
+      `  TX Hash: ${data.txHash ?? 'Pending'}`,
+      `  Block: ${data.blockNumber ?? 'Pending'}`,
+      `  Chain: Base L2 (Ethereum)`,
+      `  Anomaly Status: ${data.anomalyStatus}`,
+      '',
+      '═══════════════════════════════════════',
+      '  Verify at: https://phygital-trace.com/verify/' + idStr,
+      '═══════════════════════════════════════',
+    ].join('\n');
+
+    try {
+      if (Platform.OS === 'web') {
+        // Web: copy to clipboard and offer download
+        try {
+          await navigator.clipboard.writeText(certText);
+          alert('Certificate copied to clipboard!');
+        } catch {
+          // Fallback: create a downloadable text file
+          const blob = new Blob([certText], { type: 'text/plain' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `phygital-trace-cert-${idStr.slice(0, 8)}.txt`;
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+      } else {
+        // Mobile: use Share API
+        await Share.share({
+          title: `Phygital-Trace Certificate ${idStr.slice(0, 8)}`,
+          message: certText,
+        });
+      }
+    } catch (err) {
+      Alert.alert('Error', 'Could not share certificate');
+    }
+  }, [data, idStr, isVerified]);
+
+  // Early returns — AFTER all hooks have been called
   if (loading) {
     return (
       <View style={s.loadingContainer}>
@@ -103,10 +165,6 @@ export default function VerificationScreen() {
       </View>
     );
   }
-
-  const isVerified = data.onChainVerified || data.status === 'ATTESTED';
-  const fp = data.fingerprint || {};
-  const idStr = typeof id === 'string' ? id : String(id);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#131313' }}>
@@ -289,6 +347,18 @@ export default function VerificationScreen() {
               "No suspicious sensor patterns detected. Media stream confirms authentic physical interaction."
             </Text>
           </View>
+        </View>
+
+        {/* ─── Actions ─── */}
+        <View style={{ paddingHorizontal: 16, marginTop: 24, gap: 10 }}>
+          <TouchableOpacity style={s.downloadButton} onPress={handleDownloadCertificate}>
+            <Ionicons name="download-outline" size={16} color="#131313" />
+            <Text style={s.downloadButtonText}>DOWNLOAD CERTIFICATE</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={s.shareButton} onPress={handleDownloadCertificate}>
+            <Ionicons name="share-outline" size={16} color="#FF6B00" />
+            <Text style={s.shareButtonText}>SHARE PROOF</Text>
+          </TouchableOpacity>
         </View>
 
       </ScrollView>
@@ -800,5 +870,36 @@ const s = StyleSheet.create({
     fontSize: 13,
     lineHeight: 19,
     fontStyle: 'italic',
+  },
+
+  // Download/Share
+  downloadButton: {
+    backgroundColor: '#FF6B00',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    gap: 8,
+  },
+  downloadButtonText: {
+    fontFamily: 'SpaceGrotesk_700Bold',
+    color: '#131313',
+    fontSize: 13,
+    letterSpacing: 2,
+  },
+  shareButton: {
+    borderWidth: 1,
+    borderColor: '#FF6B00',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    gap: 8,
+  },
+  shareButtonText: {
+    fontFamily: 'SpaceGrotesk_700Bold',
+    color: '#FF6B00',
+    fontSize: 13,
+    letterSpacing: 2,
   },
 });

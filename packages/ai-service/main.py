@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Any
 
 from anomaly_detector import AnomalyDetector
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 
@@ -30,14 +30,17 @@ detector = AnomalyDetector()
 
 @app.post("/analyze", response_model=AnomalyResult)
 async def analyze(request: AnalysisRequest) -> AnomalyResult:
-    result = detector.analyze(request.fingerprint)
+    try:
+        result = detector.analyze(request.fingerprint)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
     return AnomalyResult(
         anomaly_score=result["anomaly_score"],
         anomaly_status=result["anomaly_status"],
         triggered_flags=result["triggered_flags"],
         details=result["details"],
         model_version="1.0.0",
-        analysis_timestamp=datetime.utcnow().isoformat(),
+        analysis_timestamp=datetime.now(datetime.timezone.utc).isoformat(),
     )
 
 

@@ -41,7 +41,7 @@ export function rateLimit(
     if (entry.count >= maxRequests) {
       const retryAfter = Math.ceil((entry.resetAt - now) / 1000);
       res.set('Retry-After', String(retryAfter));
-      throw new ApiError(429, 'RATE_LIMIT_EXCEEDED', `Rate limit exceeded. Try again in ${retryAfter}s`);
+      return next(new ApiError(429, 'RATE_LIMIT_EXCEEDED', `Rate limit exceeded. Try again in ${retryAfter}s`));
     }
 
     entry.count++;

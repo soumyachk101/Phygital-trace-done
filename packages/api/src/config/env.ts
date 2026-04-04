@@ -18,3 +18,12 @@ const envSchema = z.object({
 });
 
 export const env = envSchema.parse(process.env);
+
+if (env.NODE_ENV === 'production') {
+  const critical = ['DATABASE_URL', 'JWT_SECRET'] as const;
+  for (const key of critical) {
+    if (!env[key]) {
+      throw new Error(`Critical environment variable missing: ${key}`);
+    }
+  }
+}

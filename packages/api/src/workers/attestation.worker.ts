@@ -90,14 +90,14 @@ async function processItem(item: QueueItem) {
     });
 
     if (job && job.attempts < MAX_RETRIES) {
-      // Re-queue with delay
-      setTimeout(() => {
-        apiQueue.push(item);
-        logger.info('Re-queued failed attestation', {
-          captureId: item.captureId,
-          attempt: job.attempts + 1,
-        });
-      }, BASE_DELAY_MS * (2 ** (job.attempts - 1)));
+      // Re-queue immediately with delay handled by worker loop
+      apiQueue.push(item);
+      logger.info('Re-queued failed attestation', {
+        captureId: item.captureId,
+        attempt: job.attempts + 1,
+      });
+      // Delay next attempt
+      await sleep(BASE_DELAY_MS * (2 ** (job.attempts - 1)));
     } else {
       // Mark as permanently failed
       await prisma.attestationJob.update({
