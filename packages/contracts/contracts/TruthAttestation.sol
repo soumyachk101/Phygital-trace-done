@@ -35,7 +35,7 @@ contract TruthAttestation is Ownable, Pausable {
         bytes32 ipfsCidBytes32
     ) external onlyOwner whenNotPaused {
         require(
-            !attestations[payloadHash].attester.hasValue(),
+            attestations[payloadHash].attester == address(0),
             "Already attested"
         );
         require(payloadHash != bytes32(0), "Invalid payload hash");
@@ -69,7 +69,7 @@ contract TruthAttestation is Ownable, Pausable {
             bytes32 payloadHash = payloadHashes[i];
             bytes32 ipfsCidBytes32 = ipfsCidBatch[i];
 
-            if (!attestations[payloadHash].attester.hasValue()) {
+            if (attestations[payloadHash].attester == address(0)) {
                 attestations[payloadHash] = Attestation({
                     payloadHash: payloadHash,
                     ipfsCidBytes32: ipfsCidBytes32,
@@ -101,7 +101,7 @@ contract TruthAttestation is Ownable, Pausable {
         )
     {
         Attestation storage a = attestations[payloadHash];
-        exists = a.attester.hasValue();
+        exists = a.attester != address(0);
         timestamp = a.timestamp;
         attester = a.attester;
         revoked = a.revoked;
@@ -109,7 +109,7 @@ contract TruthAttestation is Ownable, Pausable {
 
     function revoke(bytes32 payloadHash) external onlyOwner {
         require(
-            attestations[payloadHash].attester.hasValue(),
+            attestations[payloadHash].attester != address(0),
             "Not attested"
         );
         attestations[payloadHash].revoked = true;
@@ -126,7 +126,6 @@ contract TruthAttestation is Ownable, Pausable {
     }
 
     function _bytes32ToString(bytes32 _bytes) internal pure returns (string memory) {
-        bytes1 CHAR_0 = 0x30;
         uint256 charCount = 0;
         for (uint256 i = 0; i < _bytes.length; i++) {
             if (_bytes[i] != 0) {
