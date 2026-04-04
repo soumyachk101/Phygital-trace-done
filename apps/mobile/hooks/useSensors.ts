@@ -1,9 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import {
-  Accelerometer,
-  Gyroscope,
-  Barometer,
-} from 'expo-sensors';
+import { Platform } from 'react-native';
 import * as Location from 'expo-location';
 
 interface SensorData {
@@ -19,6 +15,7 @@ const SAMPLE_COUNT = 10;
 /**
  * Hook that subscribes to device sensors in real-time.
  * Samples at ~10Hz and keeps the last N samples.
+ * Gracefully handles web/desktop where sensors aren't available.
  */
 export function useSensors(active = true) {
   const [data, setData] = useState<SensorData>({
@@ -42,64 +39,72 @@ export function useSensors(active = true) {
 
     const subs: any[] = [];
 
-    // Accelerometer
-    Accelerometer.isAvailableAsync().then((available) => {
-      if (!available) return;
-      Accelerometer.setUpdateInterval(100);
-      const accelSub = Accelerometer.addListener((accel) => {
-        const { x, y, z } = accel;
-        const sample = [x, y, z];
-        const samples = accelRef.current;
-        samples.push(sample);
-        if (samples.length > SAMPLE_COUNT) samples.shift();
-  
-        const latest = samples[samples.length - 1];
-        setData((prev) => ({
-          ...prev,
-          accelerometer: {
-            x: latest[0],
-            y: latest[1],
-            z: latest[2],
-            magnitude: computeMagnitude(latest),
-          },
-        }));
-      });
-      subs.push(accelSub);
-    });
+    // Only subscribe to hardware sensors on native (not web)
+    if (Platform.OS !== 'web') {
+      // Dynamically import sensors to avoid web crashes
+      import('expo-sensors').then(({ Accelerometer, Gyroscope, Barometer }) => {
+        // Accelerometer
+        Accelerometer.isAvailableAsync().then((available) => {
+          if (!available) return;
+          Accelerometer.setUpdateInterval(100);
+          const accelSub = Accelerometer.addListener((accel) => {
+            const { x, y, z } = accel;
+            const sample = [x, y, z];
+            const samples = accelRef.current;
+            samples.push(sample);
+            if (samples.length > SAMPLE_COUNT) samples.shift();
 
-    // Gyroscope
-    Gyroscope.isAvailableAsync().then((available) => {
-      if (!available) return;
-      Gyroscope.setUpdateInterval(100);
-      const gyroSub = Gyroscope.addListener((gyro) => {
-        const { x, y, z } = gyro;
-        const sample = [x, y, z];
-        const samples = gyroRef.current;
-        samples.push(sample);
-        if (samples.length > SAMPLE_COUNT) samples.shift();
-  
-        setData((prev) => ({
-          ...prev,
-          gyroscope: { x, y, z },
-        }));
-      });
-      subs.push(gyroSub);
-    });
+            const latest = samples[samples.length - 1];
+            setData((prev) => ({
+              ...prev,
+              accelerometer: {
+                x: latest[0],
+                y: latest[1],
+                z: latest[2],
+                magnitude: computeMagnitude(latest),
+              },
+            }));
+          });
+          subs.push(accelSub);
+        }).catch(() => {});
 
-    // Barometer
-    Barometer.isAvailableAsync().then((available) => {
-      if (!available) return;
-      Barometer.setUpdateInterval(1000);
-      const baroSub = Barometer.addListener((baro) => {
-        setData((prev) => ({
-          ...prev,
-          barometer: { pressure_hpa: baro.pressure },
-        }));
-      });
-      subs.push(baroSub);
-    });
+        // Gyroscope
+        Gyroscope.isAvailableAsync().then((available) => {
+          if (!available) return;
+          Gyroscope.setUpdateInterval(100);
+          const gyroSub = Gyroscope.addListener((gyro) => {
+            const { x, y, z } = gyro;
+            const sample = [x, y, z];
+            const samples = gyroRef.current;
+            samples.push(sample);
+            if (samples.length > SAMPLE_COUNT) samples.shift();
 
-    // Location
+            setData((prev) => ({
+              ...prev,
+              gyroscope: { x, y, z },
+            }));
+          });
+          subs.push(gyroSub);
+        }).catch(() => {});
+
+        // Barometer
+        Barometer.isAvailableAsync().then((available) => {
+          if (!available) return;
+          Barometer.setUpdateInterval(1000);
+          const baroSub = Barometer.addListener((baro) => {
+            setData((prev) => ({
+              ...prev,
+              barometer: { pressure_hpa: baro.pressure },
+            }));
+          });
+          subs.push(baroSub);
+        }).catch(() => {});
+      }).catch(() => {
+        console.log('Sensors module not available');
+      });
+    }
+
+    // Location - works on both web (with geolocation API) and native
     (async () => {
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
@@ -112,7 +117,7 @@ export function useSensors(active = true) {
             location: loc,
             locationAccuracy: loc.coords.accuracy ?? null,
           }));
-  
+
           // Also watch position updates
           const locSub = await Location.watchPositionAsync(
             { accuracy: Location.Accuracy.High, timeInterval: 2000 },
@@ -127,14 +132,16 @@ export function useSensors(active = true) {
           subs.push(locSub);
         }
       } catch (e) {
-        console.log("Location not available", e);
+        console.log("Location not available:", e);
       }
     })();
 
     subsRef.current = subs;
 
     return () => {
-      subs.forEach((s) => s.remove());
+      subs.forEach((s) => {
+        try { s.remove(); } catch {}
+      });
       subsRef.current = [];
     };
   }, [active, computeMagnitude]);
