@@ -1,0 +1,17 @@
+C:\Users\HP\Downloads\Phygital-Trace\node_modules\.pnpm\nativewind@4.2.3_react-nati_4cfdcbb9a5fb5976c210276f5bb0c5d4\node_modules\nativewind\dist\metro\tailwind\v3\index.js:77
+        throw new Error("Tailwind CSS has not been configured with the NativeWind preset");
+        ^
+
+Error: Tailwind CSS has not been configured with the NativeWind preset
+    at tailwindConfigV3 (C:\Users\HP\Downloads\Phygital-Trace\node_modules\.pnpm\nativewind@4.2.3_react-nati_4cfdcbb9a5fb5976c210276f5bb0c5d4\node_modules\nativewind\dist\metro\tailwind\v3\index.js:77:15)
+    at tailwindConfig (C:\Users\HP\Downloads\Phygital-Trace\node_modules\.pnpm\nativewind@4.2.3_react-nati_4cfdcbb9a5fb5976c210276f5bb0c5d4\node_modules\nativewind\dist\metro\tailwind\index.js:19:42)
+    at withNativeWind (C:\Users\HP\Downloads\Phygital-Trace\node_modules\.pnpm\nativewind@4.2.3_react-nati_4cfdcbb9a5fb5976c210276f5bb0c5d4\node_modules\nativewind\dist\metro\index.js:18:57)
+    at [eval]:1:147
+    at runScriptInThisContext (node:internal/vm:219:10)
+    at node:internal/process/execution:451:12
+    at [eval]-wrapper:6:24
+    at runScriptInContext (node:internal/process/execution:449:60)
+    at evalFunction (node:internal/process/execution:283:30)
+    at evalTypeScript (node:internal/process/execution:295:3)
+
+Node.js v25.8.0
