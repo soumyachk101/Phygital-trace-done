@@ -12,7 +12,6 @@ export function serializeFingerprint(fingerprint: Record<string, unknown>): stri
  * Compute the fingerprint hash from a raw fingerprint object.
  */
 export function hashFingerprint(fingerprint: Record<string, unknown>): string {
-  const serialized = serializeFingerprint(fingerprint);
   return computeFingerprintHash(fingerprint);
 }
 

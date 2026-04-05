@@ -58,7 +58,12 @@
       "Bash(pkill -f \"node.*expo\")",
       "Bash(npx eslint:*)",
       "Bash(HARDHAT_DISABLE_TELEMETRY_PROMPT='1' npx hardhat test)",
-      "Bash(npx:*)"
+      "Bash(npx:*)",
+      "Bash(find /c/Users/HP/Downloads/Phygital-Trace/apps/mobile -maxdepth 0 -type d -exec find {} -name \"*.tsx\" -o -name \"*.ts\" \\\\;)",
+      "WebFetch(domain:expo.dev)",
+      "Bash(cd:*)",
+      "Bash(git commit:*)",
+      "Bash(eas build:*)"
     ]
   }
 }

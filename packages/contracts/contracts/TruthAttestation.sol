@@ -39,6 +39,7 @@ contract TruthAttestation is Ownable, Pausable {
             "Already attested"
         );
         require(payloadHash != bytes32(0), "Invalid payload hash");
+        require(ipfsCidBytes32 != bytes32(0), "Invalid IPFS CID");
 
         attestations[payloadHash] = Attestation({
             payloadHash: payloadHash,
@@ -68,6 +69,9 @@ contract TruthAttestation is Ownable, Pausable {
         for (uint256 i = 0; i < payloadHashes.length; i++) {
             bytes32 payloadHash = payloadHashes[i];
             bytes32 ipfsCidBytes32 = ipfsCidBatch[i];
+            
+            require(payloadHash != bytes32(0), "Invalid payload hash");
+            require(ipfsCidBytes32 != bytes32(0), "Invalid IPFS CID");
 
             if (attestations[payloadHash].attester == address(0)) {
                 attestations[payloadHash] = Attestation({
@@ -107,11 +111,12 @@ contract TruthAttestation is Ownable, Pausable {
         revoked = a.revoked;
     }
 
-    function revoke(bytes32 payloadHash) external onlyOwner {
+    function revoke(bytes32 payloadHash) external onlyOwner whenNotPaused {
         require(
             attestations[payloadHash].attester != address(0),
             "Not attested"
         );
+        require(!attestations[payloadHash].revoked, "Already revoked");
         attestations[payloadHash].revoked = true;
 
         emit Revoked(payloadHash, msg.sender, block.timestamp);
@@ -127,7 +132,7 @@ contract TruthAttestation is Ownable, Pausable {
 
     function _bytes32ToString(bytes32 _bytes) internal pure returns (string memory) {
         uint256 charCount = 0;
-        for (uint256 i = 0; i < _bytes.length; i++) {
+        for (uint256 i = 0; i < 32; i++) {
             if (_bytes[i] != 0) {
                 charCount++;
             } else {

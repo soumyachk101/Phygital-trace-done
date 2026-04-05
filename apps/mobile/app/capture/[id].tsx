@@ -149,7 +149,14 @@ export default function CaptureDetailScreen() {
               {data.blockNumber && <DetailRow label="BLOCK" value={`#${data.blockNumber}`} />}
               {data.attestedAt && <DetailRow label="ATTESTED" value={new Date(data.attestedAt).toLocaleString()} />}
             </View>
-            <TouchableOpacity style={s.viewTxButton}>
+            <TouchableOpacity 
+              style={s.viewTxButton} 
+              onPress={() => {
+                import('react-native').then(({ Linking }) => {
+                  Linking.openURL(`https://sepolia.basescan.org/tx/${data.txHash}`);
+                });
+              }}
+            >
               <Ionicons name="open-outline" size={14} color="#888888" />
               <Text style={s.viewTxText}>VIEW ON BASESCAN</Text>
             </TouchableOpacity>

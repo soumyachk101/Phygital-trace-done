@@ -47,6 +47,14 @@ class AnomalyDetector:
         flags: list[str] = []
         details: dict[str, Any] = {}
 
+        if not fingerprint:
+            return {
+                "anomaly_score": 1.0,
+                "anomaly_status": "HIGH_RISK",
+                "triggered_flags": ["EMPTY_PAYLOAD"],
+                "details": {"payload": "Fingerprint is completely empty"},
+            }
+
         # Run all checks
         self._check_timestamp_anomaly(fingerprint, flags, details)
         self._check_gps_teleport(fingerprint, flags, details)
@@ -84,8 +92,9 @@ class AnomalyDetector:
         accuracy = gps.get("accuracy", 10.0)
         speed = gps.get("speed")
 
-        if accuracy > THRESHOLDS["GPS_MIN_ACCURACY"] and speed is not None:
-            if abs(speed) > THRESHOLDS["GPS_TELEPORT_SPEED"]:
+        if speed is not None:
+            # High speed with high reported precision is a strong indicator of teleportation/spoofing
+            if abs(speed) > THRESHOLDS["GPS_TELEPORT_SPEED"] and accuracy <= THRESHOLDS["GPS_MIN_ACCURACY"]:
                 flags.append("GPS_TELEPORT")
                 details["gps_teleport"] = f"Speed {speed} m/s with accuracy {accuracy}m"
 
@@ -101,21 +110,18 @@ class AnomalyDetector:
         accel = fp.get("accelerometer", {})
         vals = [accel.get("x"), accel.get("y"), accel.get("z")]
         vals = [v for v in vals if v is not None]
-        if len(vals) >= 2:
-            std = float(np.std(vals))
-            if std < THRESHOLDS["ACCEL_VARIANCE_MIN"]:
-                flags.append("FLAT_ACCELEROMETER")
-                details["flat_accelerometer"] = f"Stddev {std:.6f} below minimum"
+        # Cannot compute meaningful standard deviation across different physical axes in a single snapshot.
+        if vals and all(v == 0.0 for v in vals):
+            flags.append("FLAT_ACCELEROMETER")
+            details["flat_accelerometer"] = "All axes exactly 0.0 (impossible physically)"
 
     def _check_gyro_flatline(self, fp: dict, flags: list, details: dict) -> None:
         gyro = fp.get("gyroscope", {})
         vals = [gyro.get("x"), gyro.get("y"), gyro.get("z")]
         vals = [v for v in vals if v is not None]
-        if len(vals) >= 2:
-            std = float(np.std(vals))
-            if std == 0:
-                flags.append("GYRO_FLATLINE")
-                details["gyro_flatline"] = "All gyroscope samples are identical"
+        if vals and all(v == 0.0 for v in vals):
+            flags.append("GYRO_FLATLINE")
+            details["gyro_flatline"] = "All gyroscope samples are exactly 0.0"
 
     def _check_fake_network(self, fp: dict, flags: list, details: dict) -> None:
         net = fp.get("network", {})
@@ -139,11 +145,7 @@ class AnomalyDetector:
         pressure = baro.get("pressure_hpa", 0)
         conn = net.get("connectionType", "none")
 
-        if lux > 5000 and pressure > 1015 and conn == "wifi":
-            flags.append("SENSOR_MISMATCH")
-            details["sensor_mismatch"] = (
-                f"High light ({lux}lux), high pressure ({pressure}hPa), yet on WiFi — possible spoofing"
-            )
+        pass # Removed false-positive sensor mismatch check
 
     def _check_battery_anomaly(self, fp: dict, flags: list, details: dict) -> None:
         device = fp.get("device", {})
@@ -153,9 +155,6 @@ class AnomalyDetector:
         if level is not None and (level > 100.0 or level < 0.0):
             flags.append("BATTERY_ANOMALY")
             details["battery_anomaly"] = f"Battery level {level}% out of range"
-        elif level is not None and charging and level < 0:
-            flags.append("BATTERY_ANOMALY")
-            details["battery_anomaly"] = "Charging but battery level impossible"
 
     def _compute_score(self, flags: list[str]) -> float:
         if not flags:

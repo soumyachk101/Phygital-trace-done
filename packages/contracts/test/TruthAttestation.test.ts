@@ -46,13 +46,13 @@ describe("TruthAttestation", function () {
       await attestation.attest(payloadHash, ipfsCidBytes32);
       await expect(
         attestation.attest(payloadHash, ipfsCidBytes32)
-      ).to.revertedWith("Already attested");
+      ).to.be.revertedWith("Already attested");
     });
 
     it("rejects zero hash", async () => {
       await expect(
         attestation.attest(ethers.ZeroHash, ipfsCidBytes32)
-      ).to.revertedWith("Invalid payload hash");
+      ).to.be.revertedWith("Invalid payload hash");
     });
 
     it("emits Attested event", async () => {
@@ -79,7 +79,7 @@ describe("TruthAttestation", function () {
           [ethers.id("p1")],
           [ethers.encodeBytes32String("c1"), ethers.encodeBytes32String("c2")]
         )
-      ).to.revertedWith("Array length mismatch");
+      ).to.be.revertedWith("Array length mismatch");
     });
 
     it("skips already attested in batch", async () => {
@@ -115,7 +115,7 @@ describe("TruthAttestation", function () {
     });
 
     it("rejects revoking non-attested payload", async () => {
-      await expect(attestation.revoke(ethers.id("nonexistent"))).to.revertedWith("Not attested");
+      await expect(attestation.revoke(ethers.id("nonexistent"))).to.be.revertedWith("Not attested");
     });
 
     it("emits Revoked event", async () => {

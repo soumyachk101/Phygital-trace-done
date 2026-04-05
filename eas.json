@@ -1,6 +1,6 @@
 {
   "cli": {
-    "version": ">= 10.0.0",
+    "version": ">= 18.5.0",
     "appVersionSource": "remote"
   },
   "build": {
@@ -9,16 +9,13 @@
       "distribution": "internal"
     },
     "preview": {
-      "distribution": "internal",
-      "env": {
-        "EAS_PACKAGE_MANAGER": "npm"
-      },
-      "android": {
-        "buildType": "apk"
-      }
+      "distribution": "internal"
     },
     "production": {
       "autoIncrement": true
     }
+  },
+  "submit": {
+    "production": {}
   }
 }
