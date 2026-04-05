@@ -1,6 +1,6 @@
 # Phygital-Trace
 
-Phygital-Trace verifies media provenance by combining sensor-fingerprint analysis, IPFS metadata storage, and blockchain attestation.
+Phygital-Trace verifies media provenance by combining **sensor-fingerprint analysis**, **IPFS metadata storage**, and **blockchain attestation**.
 
 ## Current Repository Scope
 
@@ -12,7 +12,7 @@ This repository currently contains:
 - `packages/shared` — shared TypeScript package
 - `Docs` — product and technical documentation
 
-> Note: A mobile app is described in `Docs/`, but no `apps/mobile` source exists in this repository right now.
+> **Note:** A mobile app is described in `Docs/`, but no `apps/mobile` source exists in this repository right now.
 
 ## Architecture
 
@@ -79,7 +79,7 @@ AWS_ACCESS_KEY_ID=
 AWS_SECRET_ACCESS_KEY=
 ```
 
-> Use a strong `JWT_SECRET` in real environments (at least 32 characters) and never commit real secrets.
+> **Security tip:** Use a strong `JWT_SECRET` in real environments (at least 32 characters) and never commit real secrets.
 > Example generator: `openssl rand -base64 32`
 > Replace `ATTESTATION_CONTRACT_ADDRESS` with your deployed contract address (see `packages/contracts/scripts/deploy.ts`).
 
