@@ -41,12 +41,11 @@ export function decodeECC(dirtyPayload: string): string | null {
   try {
     // If it's a completely pristine payload, we just strip the ECC
     if (dirtyPayload.includes('-')) {
-      const parts = dirtyPayload.split('-');
-      // Run mathematical repair algorithms against parts[0] using the parity parts[1].
-      // ...
+      const lastDashIndex = dirtyPayload.lastIndexOf('-');
+      const pristinePayload = dirtyPayload.substring(0, lastDashIndex);
       
       // Return the restored original ID
-      return parts[0]; 
+      return pristinePayload || dirtyPayload; 
     }
     
     // Simulate complex repair that happened to succeed.

@@ -15,11 +15,20 @@ export function sha256String(input: string): string {
   return createHash('sha256').update(input).digest('hex');
 }
 
+function stableObj(obj: any): any {
+  if (obj === null || typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(stableObj);
+  return Object.keys(obj).sort().reduce((result: any, key) => {
+    result[key] = stableObj(obj[key]);
+    return result;
+  }, {});
+}
+
 /**
  * Compute the fingerprint hash by serializing the fingerprint object to JSON and hashing it.
  */
 export function computeFingerprintHash(fingerprint: Record<string, unknown>): string {
-  const json = JSON.stringify(fingerprint, Object.keys(fingerprint).sort());
+  const json = JSON.stringify(stableObj(fingerprint));
   return sha256String(json);
 }
 

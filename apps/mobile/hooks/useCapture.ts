@@ -177,6 +177,7 @@ export function useCapture() {
 
       let apiSuccess = false;
       let finalImageBase64 = imageBase64;
+      let captureData: CaptureResult | null = null;
 
       try {
         const response = await fetch(`${API_URL}/api/v1/captures`, {
@@ -184,6 +185,7 @@ export function useCapture() {
           headers: {
             'Content-Type': 'application/json',
             'X-Device-Id': deviceIdRef.current!,
+            'Bypass-Tunnel-Reminder': 'true'
           },
           body: JSON.stringify({
             imageHash,
@@ -192,7 +194,7 @@ export function useCapture() {
             deviceSignature,
             eccWatermarkPayload: eccPayload, // New: Pass expanded payload for SynthID stamping
             mediaType: 'PHOTO',
-            image: imageBase64.length < 50000 ? imageBase64 : undefined,
+            image: imageBase64,
             fingerprint,
             exposeLocation: true,
           }),
@@ -200,6 +202,7 @@ export function useCapture() {
 
         if (response.ok) {
           const result = await response.json();
+          captureData = result.data;
           setLastResult(result.data);
           setStatus('complete');
           apiSuccess = true;
@@ -217,50 +220,50 @@ export function useCapture() {
       // still show a successful demo result with the real hashes
       if (!apiSuccess) {
         console.warn('Backend unavailable or returned error, showing demo result');
-        const demoResult: CaptureResult = {
+        captureData = {
           captureId: `demo-${Date.now()}`,
           shortCode: imageHash.slice(0, 8).toUpperCase(),
           verificationUrl: `https://phygital-trace.com/verify/${imageHash.slice(0, 8)}`,
           anomalyStatus: 'CLEAN',
         };
-        setLastResult(demoResult);
+        setLastResult(captureData);
         setStatus('complete');
       }
 
       // IMPORTANT: After complete, we save the resulting (potentially watermarked) image to the Library.
-      try {
-        const { status: mediaStatus } = await MediaLibrary.requestPermissionsAsync();
-        if (mediaStatus === 'granted') {
-           if (photoUri && finalImageBase64 === imageBase64) {
-              await MediaLibrary.saveToLibraryAsync(photoUri);
-              console.log('Saved original to gallery');
-              Alert.alert('Saved', 'Evidence photo saved to your gallery.');
+      if (Platform.OS !== 'web') {
+        try {
+          const { status: mediaStatus } = await MediaLibrary.requestPermissionsAsync();
+          if (mediaStatus === 'granted') {
+             if (photoUri && finalImageBase64 === imageBase64) {
+                await MediaLibrary.saveToLibraryAsync(photoUri);
+                console.log('Saved original to gallery');
+                Alert.alert('Saved', 'Evidence photo saved to your gallery.');
+             } else {
+                // Save base64 returned from robust watermarking cloud service
+                const tempUri = FileSystem.cacheDirectory + `phygital-trace-${Date.now()}.jpg`;
+                await FileSystem.writeAsStringAsync(tempUri, finalImageBase64, {
+                  encoding: FileSystem.EncodingType.Base64,
+                });
+                await MediaLibrary.saveToLibraryAsync(tempUri);
+                console.log('Saved robust watermarked to gallery');
+                Alert.alert('Saved', 'Watermarked evidence photo saved to your gallery.');
+             }
+          } else {
+             console.warn('Media Library permissions not granted');
+             Alert.alert('Permission Denied', 'Please grant Photo Library permissions in your settings to save evidence.');
+          }
+        } catch(mediaErr) {
+           console.warn('Failed to save to library', mediaErr);
+           if (Constants.appOwnership === 'expo') {
+              Alert.alert('Notice', 'Cryptographic Capture Successful!\n\n(However, Expo Go restricts saving to the gallery. Build an APK to test gallery saving.)');
            } else {
-              // Save base64 returned from robust watermarking cloud service
-              const tempUri = FileSystem.cacheDirectory + `phygital-trace-${Date.now()}.jpg`;
-              await FileSystem.writeAsStringAsync(tempUri, finalImageBase64, {
-                encoding: FileSystem.EncodingType.Base64,
-              });
-              await MediaLibrary.saveToLibraryAsync(tempUri);
-              console.log('Saved robust watermarked to gallery');
-              Alert.alert('Saved', 'Watermarked evidence photo saved to your gallery.');
+              Alert.alert('Notice', 'The proof was generated, but saving the image to your gallery failed.');
            }
-        } else {
-           console.warn('Media Library permissions not granted');
-           Alert.alert('Permission Denied', 'Please grant Photo Library permissions in your settings to save evidence.');
         }
-      } catch(mediaErr) {
-         console.warn('Failed to save to library', mediaErr);
-         if (Constants.appOwnership === 'expo') {
-            Alert.alert('Notice', 'Cryptographic Capture Successful!\n\n(However, Expo Go restricts saving to the gallery. Build an APK to test gallery saving.)');
-         } else {
-            Alert.alert('Notice', 'The proof was generated, but saving the image to your gallery failed.');
-         }
       }
 
-      // Return the result if we had one
-      if (apiSuccess && lastResult) return lastResult;
-      // return demoResult logic is tricky since we set default above, but the hook doesn't strictly need a return value
+      return captureData;
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error during capture');

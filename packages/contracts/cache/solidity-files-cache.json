@@ -38,8 +38,8 @@
       ]
     },
     "C:\\Users\\HP\\Downloads\\Phygital-Trace\\packages\\contracts\\contracts\\TruthAttestation.sol": {
-      "lastModificationDate": 1775300236260,
-      "contentHash": "801b949302a94fd679e17711488ea41b",
+      "lastModificationDate": 1775347316463,
+      "contentHash": "4e5101b049f9b7574cc53a864b476b08",
       "sourceName": "contracts/TruthAttestation.sol",
       "solcConfig": {
         "version": "0.8.24",

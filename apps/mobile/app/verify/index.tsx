@@ -37,7 +37,10 @@ export default function VerifyIndexScreen() {
       
       const response = await fetch(`${API_URL}/api/v1/decode`, {
          method: 'POST',
-         headers: { 'Content-Type': 'application/json' },
+         headers: { 
+            'Content-Type': 'application/json',
+            'Bypass-Tunnel-Reminder': 'true' // Bypass localtunnel block screen
+         },
          body: JSON.stringify({ image: base64Image })
       });
 
