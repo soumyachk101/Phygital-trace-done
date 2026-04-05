@@ -10,9 +10,6 @@
     },
     "preview": {
       "distribution": "internal",
-      "env": {
-        "EAS_PACKAGE_MANAGER": "npm"
-      },
       "android": {
         "buildType": "apk"
       }
