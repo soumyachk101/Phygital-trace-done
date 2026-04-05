@@ -61,7 +61,8 @@ app.post('/api/v1/captures', async (req: Request, res: Response): Promise<void> 
     await new Promise(r => setTimeout(r, 2000));
 
     // Return the image wrapped in the expected `data` object format for the mobile app
-    const captureId = eccWatermarkPayload.split('-')[0] || `dev-${Date.now()}`;
+    const lastDashIdx = eccWatermarkPayload.lastIndexOf('-');
+    const captureId = (lastDashIdx !== -1 ? eccWatermarkPayload.substring(0, lastDashIdx) : eccWatermarkPayload) || `dev-${Date.now()}`;
     res.json({
        success: true,
        data: {
